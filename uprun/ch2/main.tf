@@ -19,16 +19,20 @@ resource "aws_security_group" "instance" {
     }
 }
 
+data "aws_vpc" "default" {
+    default = true
+}
 data "aws_subnets" "default" {
     filter {
         name = "vpc-id"
         values = [data.aws_vpc.default.id]
     }
 }
+
 resource "aws_launch_configuration" "example" {
     image_id = "ami-0fb653ca2d3203ac1"
     instance_type = "t2.micro"
-    vpc_security_group_ids = [aws_security_group.instance.id]
+    security_groups = [aws_security_group.instance.id]
 
     user_data = <<-EOF
                 #!/bin/bash
@@ -42,7 +46,7 @@ resource "aws_launch_configuration" "example" {
 }
 
 resource "aws_autoscaling_group" "example" {
-    launch_configuration = aws.launch_configuration.example.name
+    launch_configuration = aws_launch_configuration.example.name
     vpc_zone_identifier = data.aws_subnets.default.ids
 
     min_size = 2
@@ -50,12 +54,8 @@ resource "aws_autoscaling_group" "example" {
 
     tag {
         key = "Name"
-        value "tform-asg-example"
+        value = "tform-asg-example"
         propagate_at_launch = true
     }
 }
 
-output "public_ip" {
-    value = aws_instance.example.public_ip
-    description = "The public IP address of the web server"
-}

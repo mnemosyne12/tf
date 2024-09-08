@@ -1,0 +1,4 @@
+.terraform
+*.tfstate
+*.tfstate.backup
+tf-aws01_accessKeys.csv
